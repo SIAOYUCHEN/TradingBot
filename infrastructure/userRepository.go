@@ -18,7 +18,9 @@ func NewGormUserRepository(db *gorm.DB) userInterface.UserRepository {
 
 func (repo *GormUserRepository) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
 	var user domain.User
+
 	result := repo.db.WithContext(ctx).Where("username = ?", username).First(&user)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -27,7 +29,9 @@ func (repo *GormUserRepository) GetUserByUsername(ctx context.Context, username 
 
 func (repo *GormUserRepository) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 	var users []domain.User
+
 	result := repo.db.WithContext(ctx).Select("ID", "Username", "Email").Find(&users)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -37,7 +41,9 @@ func (repo *GormUserRepository) GetAllUsers(ctx context.Context) ([]domain.User,
 
 func (repo *GormUserRepository) GetUser(ctx context.Context, id uint) (*domain.User, error) {
 	var user domain.User
+
 	result := repo.db.WithContext(ctx).Select("ID", "Username", "Email").First(&user, id)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}

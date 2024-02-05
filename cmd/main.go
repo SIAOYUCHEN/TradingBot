@@ -61,7 +61,9 @@ func main() {
 
 	echo := echo.New()
 
-	echo.Validator = &controller.CustomValidator{Validator: validator.New()}
+	customValidator := controller.NewCustomValidator(validator.New())
+
+	echo.Validator = customValidator
 
 	userRepo := infrastructure.NewGormUserRepository(db)
 
@@ -107,9 +109,15 @@ func main() {
 		panic("UpdateUserEmailHandler Error")
 	}
 
-	controllerInstance := controller.NewUserController(echo)
+	baseController := controller.NewBaseController(customValidator)
+
+	controllerInstance := controller.NewUserController(echo, baseController)
+
+	tradeInstance := controller.NewTradeController(echo, baseController)
 
 	controller.MapUserRoutes(echo, controllerInstance)
+
+	controller.MapTradeRoutes(echo, tradeInstance)
 
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Title = "TradingBot Service Api"

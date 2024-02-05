@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/mehdihadeli/go-mediatr"
 
@@ -17,20 +16,16 @@ import (
 	updateUserEmail "TradingBot/domain/updateUserEmail"
 )
 
-type CustomValidator struct {
-	Validator *validator.Validate
-}
-
-func (cv *CustomValidator) Validate(i interface{}) error {
-	return cv.Validator.Struct(i)
-}
-
 type UserController struct {
+	*BaseController
 	echo *echo.Echo
 }
 
-func NewUserController(echo *echo.Echo) *UserController {
-	return &UserController{echo: echo}
+func NewUserController(echo *echo.Echo, baseController *BaseController) *UserController {
+	return &UserController{
+		BaseController: baseController,
+		echo:           echo,
+	}
 }
 
 // Login handles the user login request.
