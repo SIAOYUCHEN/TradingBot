@@ -1,38 +1,76 @@
 basePath: /
 definitions:
-  main.LoginRequest:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    type: object
-  main.User:
+  TradingBot_domain_getAllUsers.UserResponse:
     properties:
       email:
         type: string
       id:
         type: integer
-      password:
-        type: string
       username:
         type: string
     type: object
-  main.UserCreate:
+  TradingBot_domain_getUser.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+    type: object
+  domain.CreateResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+    type: object
+  domain.CreateUserCommand:
     properties:
       email:
         type: string
       password:
         type: string
       username:
-        type: string
-    type: object
-  main.UserEmailUpdate:
-    properties:
-      email:
         type: string
     required:
-    - email
+    - password
+    - username
+    type: object
+  domain.DeleteUserResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  domain.Email:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    type: object
+  domain.GetUserAllResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/TradingBot_domain_getAllUsers.UserResponse'
+        type: array
+    type: object
+  domain.LoginCommand:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  domain.LoginResponse:
+    properties:
+      token:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -41,177 +79,202 @@ info:
   title: TradingBot API
   version: "1"
 paths:
-  /api/create:
+  /api/v1/create/user:
     post:
       consumes:
       - application/json
-      description: CreateUser a new user
+      description: Create a new user with username, password, and email
       parameters:
-      - description: User data
+      - description: Create User Command
         in: body
-        name: user
+        name: createUserCommand
         required: true
         schema:
-          $ref: '#/definitions/main.UserCreate'
+          $ref: '#/definitions/domain.CreateUserCommand'
       produces:
       - application/json
       responses:
-        "201":
-          description: User created
+        "200":
+          description: User created successfully
           schema:
-            $ref: '#/definitions/main.User'
+            $ref: '#/definitions/domain.CreateResponse'
         "400":
-          description: Bad request
-      security:
-      - ApiKeyAuth: []
-      summary: CreateUser
-      tags:
-      - Users
-  /api/delete/{id}:
-    delete:
-      description: DeleteUser a user by id
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'message: User deleted'
+          description: Bad request - invalid input
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: 'error: User not found'
+            type: string
+        "401":
+          description: Unauthorized - invalid credentials
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
         "500":
-          description: 'error: Internal server error'
+          description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
       security:
       - ApiKeyAuth: []
-      summary: Delete user
+      summary: Create new user
       tags:
-      - Users
-  /api/read/{id}:
-    get:
-      description: Get a user by id
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User found
-          schema:
-            $ref: '#/definitions/main.User'
-        "404":
-          description: Not found
-      security:
-      - ApiKeyAuth: []
-      summary: Get user
-      tags:
-      - Users
-  /api/update/email/{id}:
-    put:
+      - user
+  /api/v1/delete/user/{id}:
+    delete:
       consumes:
       - application/json
-      description: UpdateUserEmail a user by id
+      description: Deletes a user with the specified ID from the database
       parameters:
       - description: User ID
         in: path
         name: id
         required: true
         type: integer
-      - description: User data
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/main.UserEmailUpdate'
       produces:
       - application/json
       responses:
         "200":
-          description: User updated
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/domain.DeleteUserResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            type: string
         "404":
-          description: Not found
+          description: User not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error - Error deleting user
+          schema:
+            type: string
       security:
       - ApiKeyAuth: []
-      summary: UpdateUserEmail
+      summary: Delete a user
       tags:
-      - Users
-  /api/users:
-    get:
-      description: Get a list of all users
+      - users
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Handles user login and returns a JWT token
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: loginBody
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginCommand'
       produces:
       - application/json
       responses:
         "200":
-          description: List of all users
+          description: JWT Token returned on successful authentication
+          schema:
+            $ref: '#/definitions/domain.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: User Login
+      tags:
+      - Authentication
+  /api/v1/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful retrieval of user information
+          schema:
+            $ref: '#/definitions/TradingBot_domain_getUser.UserResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get User by ID
+      tags:
+      - users
+  /api/v1/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             items:
-              $ref: '#/definitions/main.User'
+              $ref: '#/definitions/domain.GetUserAllResponse'
             type: array
-        "500":
-          description: 'error: Internal server error'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - ApiKeyAuth: []
       summary: Get all users
       tags:
       - Users
-  /login:
-    post:
+  /api/v1/users/{id}/email:
+    put:
       consumes:
       - application/json
-      description: Authenticate user and return JWT token if successful
+      description: Update user email by user ID
       parameters:
-      - description: Login credentials
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Email Object
         in: body
-        name: loginBody
+        name: email
         required: true
         schema:
-          $ref: '#/definitions/main.LoginRequest'
+          $ref: '#/definitions/domain.Email'
       produces:
       - application/json
       responses:
         "200":
-          description: 'token: JWT Token'
+          description: Email updated successfully
           schema:
-            additionalProperties: true
-            type: object
+            type: string
         "400":
-          description: 'error: Bad request'
+          description: Invalid request
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: 'error: Unauthorized'
+            type: string
+        "404":
+          description: User not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: User login
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Update user email
       tags:
-      - Authentication
+      - Users
 schemes:
 - http
 securityDefinitions:

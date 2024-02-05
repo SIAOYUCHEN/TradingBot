@@ -26,3 +26,13 @@ go run .
 2. 帳號：test
 
 3. 密碼：123456
+
+### 更新Swagger
+```
+swag init -g cmd/main.go --output docs/
+```
+
+### 手動添加依賴
+```
+go get -u github.com/example/library
+```
