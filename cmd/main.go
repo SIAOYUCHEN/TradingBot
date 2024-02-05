@@ -26,6 +26,7 @@ import (
 	"TradingBot/infrastructure"
 
 	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 	ginSwagger "github.com/swaggo/echo-swagger"
 )
@@ -33,6 +34,7 @@ import (
 var (
 	db  *gorm.DB
 	err error
+	rdb *redis.Client
 )
 
 // @title TradingBot API
@@ -51,6 +53,8 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
+
+	rdb = initRedis()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -124,4 +128,20 @@ func main() {
 	if err := echo.Shutdown(ctx); err != nil {
 		panic("(Shutdown) err")
 	}
+}
+
+func initRedis() *redis.Client {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	ctx := context.Background()
+	_, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		panic("Unable to connect to Redis: " + err.Error())
+	}
+
+	return rdb
 }
