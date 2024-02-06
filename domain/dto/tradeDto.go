@@ -1,8 +1,6 @@
 package domain
 
-import "fmt"
-
-type TradeDirection int
+type TradeDirection string
 type TradeMarket string
 
 type Trade struct {
@@ -13,24 +11,31 @@ type Trade struct {
 }
 
 const (
-	Ask TradeDirection = iota // 賣出
-	Bid                       // 買入
+	Ask TradeDirection = "Ask" // 賣出
+	Bid TradeDirection = "Bid" // 買入
 )
 
 const (
-	Taiwan    TradeMarket = "Taiwan"
-	Japan     TradeMarket = "Japan"
-	Usa       TradeMarket = "Usa"
-	Singapore TradeMarket = "Singapore"
+	Eth  TradeMarket = "Eth"
+	Btc  TradeMarket = "Btc"
+	Flow TradeMarket = "Flow"
+	Sol  TradeMarket = "Sol"
 )
 
-func (d TradeDirection) String() string {
-	switch d {
-	case Ask:
-		return "0"
-	case Bid:
-		return "1"
+func (tm TradeMarket) IsValid() bool {
+	switch tm {
+	case Eth, Btc, Flow, Sol:
+		return true
 	default:
-		return fmt.Sprintf("TradeDirection(%d)", d)
+		return false
+	}
+}
+
+func (td TradeDirection) IsValid() bool {
+	switch td {
+	case Ask, Bid:
+		return true
+	default:
+		return false
 	}
 }

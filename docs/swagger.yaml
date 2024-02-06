@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  TradingBot_domain_getAllUsers.UserResponse:
+  TradingBot_domain_user_getAllUsers.UserResponse:
     properties:
       email:
         type: string
@@ -9,7 +9,7 @@ definitions:
       username:
         type: string
     type: object
-  TradingBot_domain_getUser.UserResponse:
+  TradingBot_domain_user_getUser.UserResponse:
     properties:
       email:
         type: string
@@ -27,6 +27,27 @@ definitions:
       username:
         type: string
     type: object
+  domain.CreateTradeCommand:
+    properties:
+      amount:
+        type: number
+      direction:
+        $ref: '#/definitions/domain.TradeDirection'
+      market:
+        $ref: '#/definitions/domain.TradeMarket'
+      price:
+        type: number
+    required:
+    - amount
+    - direction
+    - market
+    - price
+    type: object
+  domain.CreateTradeResponse:
+    properties:
+      message:
+        type: string
+    type: object
   domain.CreateUserCommand:
     properties:
       email:
@@ -39,6 +60,11 @@ definitions:
     - password
     - username
     type: object
+  domain.DeleteTradeResponse:
+    properties:
+      message:
+        type: string
+    type: object
   domain.DeleteUserResponse:
     properties:
       message:
@@ -50,11 +76,18 @@ definitions:
         example: user@example.com
         type: string
     type: object
+  domain.GetTradeResponse:
+    properties:
+      trades:
+        items:
+          $ref: '#/definitions/domain.Trade'
+        type: array
+    type: object
   domain.GetUserAllResponse:
     properties:
       users:
         items:
-          $ref: '#/definitions/TradingBot_domain_getAllUsers.UserResponse'
+          $ref: '#/definitions/TradingBot_domain_user_getAllUsers.UserResponse'
         type: array
     type: object
   domain.LoginCommand:
@@ -72,6 +105,46 @@ definitions:
       token:
         type: string
     type: object
+  domain.Trade:
+    properties:
+      amount:
+        description: 交易數量
+        type: number
+      direction:
+        allOf:
+        - $ref: '#/definitions/domain.TradeDirection'
+        description: 交易方向，ask 表示賣出，bid 表示買入
+      market:
+        allOf:
+        - $ref: '#/definitions/domain.TradeMarket'
+        description: 市場代碼
+      price:
+        description: 交易價格
+        type: number
+    type: object
+  domain.TradeDirection:
+    enum:
+    - Ask
+    - Bid
+    type: string
+    x-enum-comments:
+      Ask: 賣出
+      Bid: 買入
+    x-enum-varnames:
+    - Ask
+    - Bid
+  domain.TradeMarket:
+    enum:
+    - Eth
+    - Btc
+    - Flow
+    - Sol
+    type: string
+    x-enum-varnames:
+    - Eth
+    - Btc
+    - Flow
+    - Sol
 host: localhost:8080
 info:
   contact: {}
@@ -79,6 +152,68 @@ info:
   title: TradingBot API
   version: "1"
 paths:
+  /api/v1/all/trades:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a map of all trades grouped by their market and direction
+        from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Map of all trades grouped by market and direction
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/domain.Trade'
+              type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Retrieve all trades
+      tags:
+      - Trade
+  /api/v1/create/trade:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new trade with market, price, amount, and direction
+      parameters:
+      - description: Create Trade Command
+        in: body
+        name: createTradeCommand
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateTradeCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trade created successfully
+          schema:
+            $ref: '#/definitions/domain.CreateTradeResponse'
+        "400":
+          description: Bad request - invalid input
+          schema:
+            type: string
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Create Trade
+      tags:
+      - Trade
   /api/v1/create/user:
     post:
       consumes:
@@ -115,6 +250,43 @@ paths:
       summary: Create new user
       tags:
       - user
+  /api/v1/delete/trade/{market}/{direction}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a trade with the specified market and direction from the
+        database
+      parameters:
+      - description: Market Identifier
+        in: path
+        name: market
+        required: true
+        type: string
+      - description: Trade Direction
+        in: path
+        name: direction
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Trade deleted successfully
+          schema:
+            $ref: '#/definitions/domain.DeleteTradeResponse'
+        "400":
+          description: Bad request - invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Delete trade
+      tags:
+      - Trade
   /api/v1/delete/user/{id}:
     delete:
       consumes:
@@ -180,6 +352,52 @@ paths:
       summary: User Login
       tags:
       - Authentication
+  /api/v1/trade/{market}/{direction}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve trades based on market and direction
+      parameters:
+      - description: Market Identifier
+        enum:
+        - Eth
+        - Btc
+        - Flow
+        - Sol
+        in: path
+        name: market
+        required: true
+        type: string
+      - description: Trade Direction
+        enum:
+        - Ask
+        - Bid
+        in: path
+        name: direction
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of trades fetched successfully
+          schema:
+            items:
+              $ref: '#/definitions/domain.GetTradeResponse'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get trade details
+      tags:
+      - Trade
   /api/v1/user/{id}:
     get:
       consumes:
@@ -197,7 +415,7 @@ paths:
         "200":
           description: Successful retrieval of user information
           schema:
-            $ref: '#/definitions/TradingBot_domain_getUser.UserResponse'
+            $ref: '#/definitions/TradingBot_domain_user_getUser.UserResponse'
         "400":
           description: Bad request
           schema:

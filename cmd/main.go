@@ -13,16 +13,24 @@ import (
 
 	"github.com/mehdihadeli/go-mediatr"
 
+	tradeCommand "TradingBot/application/handler/trade/command"
+	tradeQuery "TradingBot/application/handler/trade/query"
 	userCommand "TradingBot/application/handler/user/command"
 	userQuery "TradingBot/application/handler/user/query"
+
 	controller "TradingBot/controller"
 
-	createUser "TradingBot/domain/createUser"
-	deleteUser "TradingBot/domain/deleteUser"
-	getAllUsers "TradingBot/domain/getAllUsers"
-	getUser "TradingBot/domain/getUser"
-	login "TradingBot/domain/login"
-	updateUserEmail "TradingBot/domain/updateUserEmail"
+	createUser "TradingBot/domain/user/createUser"
+	deleteUser "TradingBot/domain/user/deleteUser"
+	getAllUsers "TradingBot/domain/user/getAllUsers"
+	getUser "TradingBot/domain/user/getUser"
+	login "TradingBot/domain/user/login"
+	updateUserEmail "TradingBot/domain/user/updateUserEmail"
+
+	createTrade "TradingBot/domain/trade/createTrade"
+	deleteTrade "TradingBot/domain/trade/deleteTrade"
+	getAllTrade "TradingBot/domain/trade/getAllTrade"
+	getTrade "TradingBot/domain/trade/getTrade"
 	"TradingBot/infrastructure"
 
 	"github.com/go-playground/validator"
@@ -67,6 +75,8 @@ func main() {
 
 	userRepo := infrastructure.NewGormUserRepository(db)
 
+	tradeRepo := infrastructure.NewRedisTradeRepository(rdb)
+
 	loginHandler := userCommand.NewLoginHandler(userRepo)
 
 	createUserHandler := userCommand.NewCreateUserHandler(userRepo)
@@ -78,6 +88,14 @@ func main() {
 	deleteUserHandler := userCommand.NewDeleteUserHandler(userRepo)
 
 	updateUserEmailHandler := userCommand.NewUpdateUserEmailHandler(userRepo)
+
+	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo)
+
+	getTradeHandler := tradeQuery.NewGetTradeHandler(tradeRepo)
+
+	getAllTradeHandler := tradeQuery.NewGetAllTradeHandler(tradeRepo)
+
+	deleteTradeHandler := tradeCommand.NewDeleteTradeHandler(tradeRepo)
 
 	err := mediatr.RegisterRequestHandler[*login.LoginCommand, *login.LoginResponse](loginHandler)
 	if err != nil {
@@ -107,6 +125,26 @@ func main() {
 	err = mediatr.RegisterRequestHandler[*updateUserEmail.UpdateUserEmailCommand, *updateUserEmail.UpdateUserEmailResponse](updateUserEmailHandler)
 	if err != nil {
 		panic("UpdateUserEmailHandler Error")
+	}
+
+	err = mediatr.RegisterRequestHandler[*createTrade.CreateTradeCommand, *createTrade.CreateTradeResponse](createTradeHandler)
+	if err != nil {
+		panic("CreateTradeHandler Error")
+	}
+
+	err = mediatr.RegisterRequestHandler[*getTrade.GetTradeQuery, *getTrade.GetTradeResponse](getTradeHandler)
+	if err != nil {
+		panic("GetTradeHandler Error")
+	}
+
+	err = mediatr.RegisterRequestHandler[*getAllTrade.GetAllTradeQuery, *getAllTrade.GetAllTradeResponse](getAllTradeHandler)
+	if err != nil {
+		panic("GetAllTradeHandler Error")
+	}
+
+	err = mediatr.RegisterRequestHandler[*deleteTrade.DeleteTradeCommand, *deleteTrade.DeleteTradeResponse](deleteTradeHandler)
+	if err != nil {
+		panic("DeleteTradeHandler Error")
 	}
 
 	baseController := controller.NewBaseController(customValidator)

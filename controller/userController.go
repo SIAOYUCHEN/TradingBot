@@ -8,12 +8,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/mehdihadeli/go-mediatr"
 
-	createUser "TradingBot/domain/createUser"
-	deleteUser "TradingBot/domain/deleteUser"
-	getAllUsers "TradingBot/domain/getAllUsers"
-	getUser "TradingBot/domain/getUser"
-	login "TradingBot/domain/login"
-	updateUserEmail "TradingBot/domain/updateUserEmail"
+	createUser "TradingBot/domain/user/createUser"
+	deleteUser "TradingBot/domain/user/deleteUser"
+	getAllUsers "TradingBot/domain/user/getAllUsers"
+	getUser "TradingBot/domain/user/getUser"
+	login "TradingBot/domain/user/login"
+	updateUserEmail "TradingBot/domain/user/updateUserEmail"
 )
 
 type UserController struct {

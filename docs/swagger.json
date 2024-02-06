@@ -12,6 +12,103 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
+        "/api/v1/all/trades": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves a map of all trades grouped by their market and direction from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Retrieve all trades",
+                "responses": {
+                    "200": {
+                        "description": "Map of all trades grouped by market and direction",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/domain.Trade"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/create/trade": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Creates a new trade with market, price, amount, and direction",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Create Trade",
+                "parameters": [
+                    {
+                        "description": "Create Trade Command",
+                        "name": "createTradeCommand",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.CreateTradeCommand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trade created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/domain.CreateTradeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid input",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/create/user": {
             "post": {
                 "security": [
@@ -56,6 +153,62 @@
                     },
                     "401": {
                         "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/delete/trade/{market}/{direction}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deletes a trade with the specified market and direction from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Delete trade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Market Identifier",
+                        "name": "market",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trade Direction",
+                        "name": "direction",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trade deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/domain.DeleteTradeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid input",
                         "schema": {
                             "type": "string"
                         }
@@ -170,6 +323,75 @@
                 }
             }
         },
+        "/api/v1/trade/{market}/{direction}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieve trades based on market and direction",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Trade"
+                ],
+                "summary": "Get trade details",
+                "parameters": [
+                    {
+                        "enum": [
+                            "Eth",
+                            "Btc",
+                            "Flow",
+                            "Sol"
+                        ],
+                        "type": "string",
+                        "description": "Market Identifier",
+                        "name": "market",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "Ask",
+                            "Bid"
+                        ],
+                        "type": "string",
+                        "description": "Trade Direction",
+                        "name": "direction",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of trades fetched successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.GetTradeResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/{id}": {
             "get": {
                 "security": [
@@ -201,7 +423,7 @@
                     "200": {
                         "description": "Successful retrieval of user information",
                         "schema": {
-                            "$ref": "#/definitions/TradingBot_domain_getUser.UserResponse"
+                            "$ref": "#/definitions/TradingBot_domain_user_getUser.UserResponse"
                         }
                     },
                     "400": {
@@ -322,7 +544,7 @@
         }
     },
     "definitions": {
-        "TradingBot_domain_getAllUsers.UserResponse": {
+        "TradingBot_domain_user_getAllUsers.UserResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -336,7 +558,7 @@
                 }
             }
         },
-        "TradingBot_domain_getUser.UserResponse": {
+        "TradingBot_domain_user_getUser.UserResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -364,6 +586,37 @@
                 }
             }
         },
+        "domain.CreateTradeCommand": {
+            "type": "object",
+            "required": [
+                "amount",
+                "direction",
+                "market",
+                "price"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "direction": {
+                    "$ref": "#/definitions/domain.TradeDirection"
+                },
+                "market": {
+                    "$ref": "#/definitions/domain.TradeMarket"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "domain.CreateTradeResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.CreateUserCommand": {
             "type": "object",
             "required": [
@@ -378,6 +631,14 @@
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.DeleteTradeResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }
@@ -399,13 +660,24 @@
                 }
             }
         },
+        "domain.GetTradeResponse": {
+            "type": "object",
+            "properties": {
+                "trades": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Trade"
+                    }
+                }
+            }
+        },
         "domain.GetUserAllResponse": {
             "type": "object",
             "properties": {
                 "users": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TradingBot_domain_getAllUsers.UserResponse"
+                        "$ref": "#/definitions/TradingBot_domain_user_getAllUsers.UserResponse"
                     }
                 }
             }
@@ -432,6 +704,65 @@
                     "type": "string"
                 }
             }
+        },
+        "domain.Trade": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "交易數量",
+                    "type": "number"
+                },
+                "direction": {
+                    "description": "交易方向，ask 表示賣出，bid 表示買入",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.TradeDirection"
+                        }
+                    ]
+                },
+                "market": {
+                    "description": "市場代碼",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.TradeMarket"
+                        }
+                    ]
+                },
+                "price": {
+                    "description": "交易價格",
+                    "type": "number"
+                }
+            }
+        },
+        "domain.TradeDirection": {
+            "type": "string",
+            "enum": [
+                "Ask",
+                "Bid"
+            ],
+            "x-enum-comments": {
+                "Ask": "賣出",
+                "Bid": "買入"
+            },
+            "x-enum-varnames": [
+                "Ask",
+                "Bid"
+            ]
+        },
+        "domain.TradeMarket": {
+            "type": "string",
+            "enum": [
+                "Eth",
+                "Btc",
+                "Flow",
+                "Sol"
+            ],
+            "x-enum-varnames": [
+                "Eth",
+                "Btc",
+                "Flow",
+                "Sol"
+            ]
         }
     },
     "securityDefinitions": {

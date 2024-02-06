@@ -1,8 +1,8 @@
 package application
 
 import (
-	domain "TradingBot/domain/deleteUser"
-	userInterface "TradingBot/domain/userInterface"
+	userInterface "TradingBot/domain/Interface"
+	domain "TradingBot/domain/user/deleteUser"
 	"context"
 	"errors"
 

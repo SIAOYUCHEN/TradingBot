@@ -1,8 +1,8 @@
 package infrastructure
 
 import (
+	userInterface "TradingBot/domain/Interface"
 	domain "TradingBot/domain/dto"
-	userInterface "TradingBot/domain/userInterface"
 	"context"
 
 	"gorm.io/gorm"

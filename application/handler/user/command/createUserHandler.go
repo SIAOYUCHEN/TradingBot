@@ -1,9 +1,9 @@
 package application
 
 import (
-	domain "TradingBot/domain/createUser"
+	userInterface "TradingBot/domain/Interface"
 	dto "TradingBot/domain/dto"
-	userInterface "TradingBot/domain/userInterface"
+	domain "TradingBot/domain/user/createUser"
 	"context"
 	"errors"
 
