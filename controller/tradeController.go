@@ -30,7 +30,7 @@ func NewTradeController(echo *echo.Echo, baseController *BaseController) *TradeC
 // @Tags Trade
 // @Accept json
 // @Produce json
-// @Param createTradeCommand body createTrade.CreateTradeCommand true "Create Trade Command" example({"market": "Eth", "price": 100, "amount": 1, "direction": "Ask"})
+// @Param createTradeCommand body createTrade.CreateTradeCommand true "Create Trade Command" example({"market": "ETH/USDT", "price": 100, "amount": 1, "direction": "Ask"})
 // @Success 200 {object} createTrade.CreateTradeResponse "Trade created successfully"
 // @Failure 400 {string} string "Bad request - invalid input"
 // @Failure 401 {string} string "Unauthorized - invalid credentials"

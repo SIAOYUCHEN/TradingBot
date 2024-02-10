@@ -755,10 +755,10 @@ const docTemplate = `{
         "domain.TradeMarket": {
             "type": "string",
             "enum": [
-                "Eth",
-                "Btc",
-                "Flow",
-                "Sol"
+                "ETH/USDT",
+                "BTC/USDT",
+                "FLOW/USDT",
+                "SOL/USDT"
             ],
             "x-enum-varnames": [
                 "Eth",

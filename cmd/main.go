@@ -33,6 +33,7 @@ import (
 	getTrade "TradingBot/domain/trade/getTrade"
 	"TradingBot/infrastructure"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/go-playground/validator"
 	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
@@ -67,6 +68,8 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
+	node, err := snowflake.NewNode(1)
+
 	echo := echo.New()
 
 	customValidator := controller.NewCustomValidator(validator.New())
@@ -89,7 +92,7 @@ func main() {
 
 	updateUserEmailHandler := userCommand.NewUpdateUserEmailHandler(userRepo)
 
-	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo)
+	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo, node)
 
 	getTradeHandler := tradeQuery.NewGetTradeHandler(tradeRepo)
 
@@ -97,7 +100,7 @@ func main() {
 
 	deleteTradeHandler := tradeCommand.NewDeleteTradeHandler(tradeRepo)
 
-	err := mediatr.RegisterRequestHandler[*login.LoginCommand, *login.LoginResponse](loginHandler)
+	err = mediatr.RegisterRequestHandler[*login.LoginCommand, *login.LoginResponse](loginHandler)
 	if err != nil {
 		panic("LoginHandler Error")
 	}

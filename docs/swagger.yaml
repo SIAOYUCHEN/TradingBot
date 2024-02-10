@@ -135,10 +135,10 @@ definitions:
     - Bid
   domain.TradeMarket:
     enum:
-    - Eth
-    - Btc
-    - Flow
-    - Sol
+    - ETH/USDT
+    - BTC/USDT
+    - FLOW/USDT
+    - SOL/USDT
     type: string
     x-enum-varnames:
     - Eth
