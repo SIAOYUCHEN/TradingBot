@@ -130,7 +130,7 @@ func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Tra
 			break
 		}
 
-		if trade.Direction == "Bid" && trade.Amount >= oppTrade.Amount && trade.Price >= oppTrade.Price {
+		if trade.Direction == "Bid" /*&& trade.Amount >= oppTrade.Amount*/ && trade.Price >= oppTrade.Price {
 
 			transaction := domain.MatchingTrade{
 				AskId:     trade.Id,
@@ -155,7 +155,7 @@ func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Tra
 					Member: updatedOppTradeJSON,
 				})
 			}
-		} else if trade.Direction == "Ask" && trade.Amount >= oppTrade.Amount && trade.Price <= oppTrade.Price {
+		} else if trade.Direction == "Ask" /*&& trade.Amount >= oppTrade.Amount*/ && trade.Price <= oppTrade.Price {
 
 			transaction := domain.MatchingTrade{
 				AskId:     trade.Id,
