@@ -8,6 +8,9 @@ import (
 
 	"time"
 
+	"errors"
+	"strconv"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -23,29 +26,29 @@ func NewRedisTradeRepository(client *redis.Client) tradeInterface.TradeRedisRepo
 
 func (r *RedisTradeRepository) AddTrade(ctx context.Context, trade *domain.Trade, key string) error {
 
-	// tradeJSON, err := json.Marshal(trade)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if err := r.Client.RPush(ctx, key, tradeJSON).Err(); err != nil {
-	// 	return err
-	// }
-
-	// return nil
-
-	score := float64(trade.Timestamp.UnixNano())
-	member, err := json.Marshal(trade)
+	tradeJSON, err := json.Marshal(trade)
 	if err != nil {
 		return err
 	}
 
-	_, err = r.Client.ZAdd(ctx, key, &redis.Z{
-		Score:  score,
-		Member: member,
-	}).Result()
+	if err := r.Client.RPush(ctx, key, tradeJSON).Err(); err != nil {
+		return err
+	}
 
-	return err
+	return nil
+
+	// score := float64(trade.Timestamp.UnixNano())
+	// member, err := json.Marshal(trade)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// _, err = r.Client.ZAdd(ctx, key, &redis.Z{
+	// 	Score:  score,
+	// 	Member: member,
+	// }).Result()
+
+	// return err
 }
 
 func (r *RedisTradeRepository) GetTrade(ctx context.Context, key string) ([]*domain.Trade, error) {
@@ -103,17 +106,28 @@ func (r *RedisTradeRepository) DeleteTrade(ctx context.Context, key string) (int
 	return r.Client.Del(ctx, key).Result()
 }
 
-func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Trade, oppositeKey string, key string) error {
+func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Trade, oppositeKey string, key string) ([]domain.MatchingTrade, error) {
+
+	var minScore, maxScore string
+	if trade.Direction == "Bid" {
+		minScore = "-inf"
+		maxScore = strconv.FormatFloat(trade.Price, 'f', -1, 64) // Ask 方向，我们需要找出价格小于或等于当前价格的对向交易
+	} else if trade.Direction == "Ask" {
+		minScore = strconv.FormatFloat(trade.Price, 'f', -1, 64)
+		maxScore = "+inf" // Bid 方向，我们需要找出价格大于或等于当前价格的对向交易
+	} else {
+		return nil, errors.New("invalid trade direction")
+	}
 
 	oppositeTrades, err := r.Client.ZRangeByScore(ctx, oppositeKey, &redis.ZRangeBy{
-		Min:    "-inf",
-		Max:    "+inf",
+		Min:    minScore,
+		Max:    maxScore,
 		Offset: 0,
 		Count:  -1,
 	}).Result()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var transactions []domain.MatchingTrade
@@ -151,7 +165,7 @@ func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Tra
 			} else {
 				updatedOppTradeJSON, _ := json.Marshal(oppTrade)
 				pipe.ZAdd(ctx, oppositeKey, &redis.Z{
-					Score:  float64(oppTrade.Timestamp.UnixNano()),
+					Score:  trade.Price,
 					Member: updatedOppTradeJSON,
 				})
 			}
@@ -176,7 +190,7 @@ func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Tra
 			} else {
 				updatedOppTradeJSON, _ := json.Marshal(oppTrade)
 				pipe.ZAdd(ctx, oppositeKey, &redis.Z{
-					Score:  float64(oppTrade.Timestamp.UnixNano()),
+					Score:  trade.Price,
 					Member: updatedOppTradeJSON,
 				})
 			}
@@ -186,10 +200,14 @@ func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Tra
 	if trade.Amount > 0 {
 		newTradeJSON, _ := json.Marshal(trade)
 		pipe.ZAdd(ctx, key, &redis.Z{
-			Score:  float64(trade.Timestamp.UnixNano()),
+			Score:  trade.Price,
 			Member: newTradeJSON,
 		})
 	}
+
+	var transactionJSON []domain.MatchingTrade
+
+	transactionJSON = transactions
 
 	for _, t := range transactions {
 		transactionJSON, _ := json.Marshal(t)
@@ -198,8 +216,8 @@ func (r *RedisTradeRepository) MatchTrade(ctx context.Context, trade *domain.Tra
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return err
+	return transactionJSON, err
 }

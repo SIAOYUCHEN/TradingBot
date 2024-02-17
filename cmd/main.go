@@ -78,6 +78,8 @@ func main() {
 
 	userRepo := infrastructure.NewGormUserRepository(db)
 
+	tradeDb := infrastructure.NewGormTradeRepository(db)
+
 	tradeRepo := infrastructure.NewRedisTradeRepository(rdb)
 
 	loginHandler := userCommand.NewLoginHandler(userRepo)
@@ -92,7 +94,7 @@ func main() {
 
 	updateUserEmailHandler := userCommand.NewUpdateUserEmailHandler(userRepo)
 
-	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo, node)
+	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo, node, tradeDb)
 
 	getTradeHandler := tradeQuery.NewGetTradeHandler(tradeRepo)
 

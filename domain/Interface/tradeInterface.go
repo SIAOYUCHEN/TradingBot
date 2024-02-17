@@ -17,5 +17,5 @@ type TradeRedisRepository interface {
 
 	DeleteTrade(ctx context.Context, key string) (int64, error)
 
-	MatchTrade(ctx context.Context, trade *dto.Trade, oppositeKey string, key string) error
+	MatchTrade(ctx context.Context, trade *dto.Trade, oppositeKey string, key string) ([]dto.MatchingTrade, error)
 }
