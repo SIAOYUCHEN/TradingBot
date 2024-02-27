@@ -33,6 +33,7 @@ import (
 	getTrade "TradingBot/domain/trade/getTrade"
 	"TradingBot/infrastructure"
 
+	"github.com/IBM/sarama"
 	"github.com/bwmarrin/snowflake"
 	"github.com/go-playground/validator"
 	"github.com/go-redis/redis/v8"
@@ -76,11 +77,28 @@ func main() {
 
 	echo.Validator = customValidator
 
+	brokers := []string{"localhost:9092"}
+
+	group := "trade-group"
+
+	topics := []string{"trades", "transactions"}
+
+	kafkaProducer := infrastructure.NewKafkaProducerRepository(brokers)
+
 	userRepo := infrastructure.NewGormUserRepository(db)
 
 	tradeDb := infrastructure.NewGormTradeRepository(db)
 
 	tradeRepo := infrastructure.NewRedisTradeRepository(rdb)
+
+	config := sarama.NewConfig()
+
+	consumerGroup, err := sarama.NewConsumerGroup(brokers, group, config)
+	if err != nil {
+		panic("Error creating Kafka consumer group: %v")
+	}
+
+	tradeMessageHandler := tradeCommand.NewKafkaTradeMessageHandler(tradeDb, tradeRepo, kafkaProducer)
 
 	loginHandler := userCommand.NewLoginHandler(userRepo)
 
@@ -94,7 +112,7 @@ func main() {
 
 	updateUserEmailHandler := userCommand.NewUpdateUserEmailHandler(userRepo)
 
-	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo, node, tradeDb)
+	createTradeHandler := tradeCommand.NewCreateTradeHandler(tradeRepo, node, tradeDb, kafkaProducer)
 
 	getTradeHandler := tradeQuery.NewGetTradeHandler(tradeRepo)
 
@@ -174,10 +192,25 @@ func main() {
 		}
 	}()
 
+	go func() {
+		for {
+			if err := consumerGroup.Consume(ctx, topics, tradeMessageHandler); err != nil {
+				panic("Error consuming from Kafka: %v")
+			}
+			if ctx.Err() != nil {
+				return
+			}
+		}
+	}()
+
 	<-ctx.Done()
 
 	if err := echo.Shutdown(ctx); err != nil {
 		panic("(Shutdown) err")
+	}
+
+	if err := consumerGroup.Close(); err != nil {
+		panic("Error closing Kafka consumer group: %v")
 	}
 }
 
