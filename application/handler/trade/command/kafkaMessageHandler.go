@@ -40,8 +40,10 @@ func (h *KafkaTradeMessageHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 		switch message.Topic {
 		case "trades":
 			h.handleTradesMessage(message)
-		case "other-topic":
-			//h.handleOtherTopicMessage(message)
+		case "matching":
+			h.handleMatchingMessage(message)
+		case "transaction":
+			h.handleTransactionMessage(message)
 		}
 
 		session.MarkMessage(message, "")
@@ -51,7 +53,9 @@ func (h *KafkaTradeMessageHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 }
 
 func (h *KafkaTradeMessageHandler) handleTradesMessage(message *sarama.ConsumerMessage) {
+
 	var tradeMessage dto.Trade
+
 	if err := json.Unmarshal(message.Value, &tradeMessage); err != nil {
 
 		return
@@ -85,5 +89,20 @@ func (h *KafkaTradeMessageHandler) handleTradesMessage(message *sarama.ConsumerM
 		return
 	}
 
-	h.KafkaProducer.SendTradeToKafkaSpecifyTopic(&trade, "transactions")
+	h.KafkaProducer.SendTradeToKafkaSpecifyTopic(&trade, "matching")
+}
+
+func (h *KafkaTradeMessageHandler) handleMatchingMessage(message *sarama.ConsumerMessage) {
+
+	var tradeMessage dto.Trade
+
+	if err := json.Unmarshal(message.Value, &tradeMessage); err != nil {
+
+		return
+	}
+
+}
+
+func (h *KafkaTradeMessageHandler) handleTransactionMessage(message *sarama.ConsumerMessage) {
+
 }
