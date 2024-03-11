@@ -53,3 +53,15 @@ func (k *KafkaProducerRepository) SendTradeToKafkaSpecifyTopic(trade *domain.Tra
 
 	return k.SendMessage(topic, tradeID, tradeJSON)
 }
+
+func (k *KafkaProducerRepository) SendMatchTradeToKafkaSpecifyTopic(matchedTrades []domain.MatchingTrade, topic string) error {
+
+	tradeJSON, err := json.Marshal(matchedTrades)
+	if err != nil {
+		return err
+	}
+
+	tradeID := []byte(fmt.Sprintf("%d", matchedTrades[0].Timestamp.Unix()))
+
+	return k.SendMessage(topic, tradeID, tradeJSON)
+}

@@ -81,7 +81,7 @@ func main() {
 
 	group := "trade-group"
 
-	topics := []string{"trades", "transactions"}
+	topics := []string{"trades", "transactions", "matching"}
 
 	kafkaProducer := infrastructure.NewKafkaProducerRepository(brokers)
 
@@ -98,7 +98,7 @@ func main() {
 		panic("Error creating Kafka consumer group: %v")
 	}
 
-	tradeMessageHandler := tradeCommand.NewKafkaTradeMessageHandler(tradeDb, tradeRepo, kafkaProducer)
+	tradeMessageHandler := tradeCommand.NewKafkaTradeMessageHandler(tradeDb, tradeRepo, kafkaProducer, node)
 
 	loginHandler := userCommand.NewLoginHandler(userRepo)
 
